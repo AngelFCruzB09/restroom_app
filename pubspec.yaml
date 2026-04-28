@@ -39,6 +39,7 @@ dependencies:
   http: ^1.1.0
   flutter_dotenv: ^6.0.1
   geolocator: ^14.0.2
+  rive: ^0.13.20
 
 dev_dependencies:
   flutter_test:
@@ -67,6 +68,7 @@ flutter:
 
   assets:
     - .env
+    - assets/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

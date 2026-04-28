@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:restroom_app/place_model.dart';
 import 'package:restroom_app/places_service.dart';
 import 'package:restroom_app/location_service.dart';
+import 'package:rive/rive.dart';
 
 class MapRestrooms extends StatefulWidget {
   const MapRestrooms({super.key});
@@ -64,8 +65,15 @@ class _MapRestroomsState extends State<MapRestrooms> {
         title: const Text('Mapa de Baños'),
         backgroundColor: Colors.blue,
       ),
+      backgroundColor: _isLoading ? Colors.white : null,
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(
+              child: SizedBox(
+                width: 200,
+                height: 200,
+                child: RiveAnimation.asset('assets/69-98-loading.riv'),
+              ),
+            )
           : _buildMap(),
     );
   }
