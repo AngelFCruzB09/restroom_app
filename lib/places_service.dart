@@ -6,8 +6,14 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class RestroomService {
   final String apiKey = dotenv.env['GOOGLE_KEY'] ?? "";
 
-  Future<List<RestroomLocal>> findRestrooms(double lat, double lng) async {
-    final url = Uri.parse('https://places.googleapis.com/v1/places:searchText');
+  Future<List<RestroomLocal>> findRestrooms(
+    double lat,
+    double lng, {
+    double radius = 500.0,
+  }) async {
+    final url = Uri.parse(
+      'https://places.googleapis.com/v1/places:searchNearby',
+    );
     final response = await http.post(
       url,
       headers: {
@@ -17,11 +23,17 @@ class RestroomService {
             'places.id,places.displayName,places.location,places.editorialSummary,places.restroom,places.accessibilityOptions',
       },
       body: jsonEncode({
-        'textQuery': 'gasolineras, restaurante',
-        'locationBias': {
+        'includedTypes': [
+          'restaurant',
+          'gas_station',
+          'cafe',
+          'primary_school',
+          'university',
+        ],
+        'locationRestriction': {
           'circle': {
             'center': {'latitude': lat, 'longitude': lng},
-            'radius': 1500.0,
+            'radius': radius,
           },
         },
       }),

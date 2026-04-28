@@ -17,7 +17,7 @@ class _MapRestroomsState extends State<MapRestrooms> {
     20.9705938613977,
     -89.62029365893679,
   );
-  static const double _initialZoom = 13.0;
+  static const double _initialZoom = 15.0;
 
   LatLng _currentPosition = _centerMerida;
   List<RestroomLocal> _listaBanos = [];
@@ -87,7 +87,7 @@ class _MapRestroomsState extends State<MapRestrooms> {
   }
 
   List<Marker> _buildMarkers() {
-    return _listaBanos.map((bano) {
+    final markers = _listaBanos.map((bano) {
       return Marker(
         point: LatLng(bano.lat, bano.lng),
         width: 40,
@@ -102,6 +102,15 @@ class _MapRestroomsState extends State<MapRestrooms> {
         ),
       );
     }).toList();
+    markers.add(
+      Marker(
+        point: _currentPosition,
+        width: 40,
+        height: 40,
+        child: Icon(Icons.circle, color: Colors.blue, size: 30),
+      ),
+    );
+    return markers;
   }
 
   void _mostrarDetalles(BuildContext context, RestroomLocal bano) {
