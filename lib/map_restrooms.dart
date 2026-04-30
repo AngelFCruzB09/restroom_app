@@ -104,7 +104,7 @@ class _MapRestroomsState extends State<MapRestrooms> {
           onTap: () => _mostrarDetalles(context, bano),
           child: Icon(
             Icons.wc,
-            color: bano.esAccesible ? Colors.blue : Colors.red,
+            color: bano.tienerestroom ? Colors.blue : Colors.red,
             size: 40,
           ),
         ),
