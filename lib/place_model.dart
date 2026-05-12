@@ -6,6 +6,9 @@ class RestroomLocal {
   final double lng;
   final bool tienerestroom;
   final bool esAccesible;
+  final String? tipoLugar;
+  final bool? abiertoAhora;
+  final List<String>? horarios;
 
   RestroomLocal({
     required this.id,
@@ -15,8 +18,16 @@ class RestroomLocal {
     required this.lng,
     required this.tienerestroom,
     required this.esAccesible,
+    this.tipoLugar,
+    this.abiertoAhora,
+    this.horarios,
   });
   factory RestroomLocal.fromJson(Map<String, dynamic> json) {
+    List<String>? horariosParsed;
+    if (json['regularOpeningHours'] != null && json['regularOpeningHours']['weekdayDescriptions'] != null) {
+      horariosParsed = List<String>.from(json['regularOpeningHours']['weekdayDescriptions']);
+    }
+
     return RestroomLocal(
       id: json['id'] ?? '',
       name: json['displayName']?['text'] ?? 'Sin nombre',
@@ -25,6 +36,9 @@ class RestroomLocal {
       lng: json['location']?['longitude'] ?? 0.0,
       tienerestroom: json['restroom'] ?? false,
       esAccesible: json['accessibilityOptions']?['wheelchairAccessibleRestroom'] ?? false,
+      tipoLugar: json['primaryType'],
+      abiertoAhora: json['regularOpeningHours']?['openNow'],
+      horarios: horariosParsed,
     );
   }
 }

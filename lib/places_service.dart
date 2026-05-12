@@ -20,7 +20,7 @@ class RestroomService {
         'Content-Type': 'application/json',
         'X-Goog-Api-Key': apiKey,
         'X-Goog-FieldMask':
-            'places.id,places.displayName,places.location,places.editorialSummary,places.restroom,places.accessibilityOptions',
+            'places.id,places.displayName,places.location,places.editorialSummary,places.restroom,places.accessibilityOptions,places.primaryType,places.regularOpeningHours',
       },
       body: jsonEncode({
         'includedTypes': [

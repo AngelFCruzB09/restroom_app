@@ -122,42 +122,186 @@ class _MapRestroomsState extends State<MapRestrooms> {
   }
 
   void _mostrarDetalles(BuildContext context, RestroomLocal bano) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (context) => _RestroomDetailDialog(bano: bano),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.85,
+          ),
+          child: _RestroomBottomSheet(bano: bano),
+        );
+      },
     );
   }
 }
 
-class _RestroomDetailDialog extends StatelessWidget {
+class _RestroomBottomSheet extends StatefulWidget {
   final RestroomLocal bano;
 
-  const _RestroomDetailDialog({required this.bano});
+  const _RestroomBottomSheet({required this.bano});
+
+  @override
+  State<_RestroomBottomSheet> createState() => _RestroomBottomSheetState();
+}
+
+class _RestroomBottomSheetState extends State<_RestroomBottomSheet> {
+  bool _horariosExpandidos = false;
+
+  String _traducirTipo(String? tipo) {
+    if (tipo == null) return "Lugar";
+    switch (tipo) {
+      case 'restaurant': return 'Restaurante';
+      case 'gas_station': return 'Gasolinera';
+      case 'cafe': return 'Cafetería';
+      case 'primary_school': return 'Escuela Primaria';
+      case 'university': return 'Universidad';
+      default: return tipo.replaceAll('_', ' ');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(bano.name),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
+    final bano = widget.bano;
+    final tipoLugarStr = _traducirTipo(bano.tipoLugar);
+
+    return Container(
+      padding: const EdgeInsets.all(20.0),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: ListView(
+        shrinkWrap: true,
         children: [
-          Text(bano.description),
-          const SizedBox(height: 10),
-          Text(
-            bano.tienerestroom ? "Tiene baños" : "No tiene baños",
-            style: TextStyle(
-              color: bano.tienerestroom ? Colors.green : Colors.red,
-              fontWeight: FontWeight.bold,
+          // Indicador de arrastre
+          Center(
+            child: Container(
+              width: 40,
+              height: 5,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           ),
+          
+          // Encabezado
+          Text(
+            bano.name,
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            tipoLugarStr,
+            style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+          ),
+          const SizedBox(height: 20),
+          
+          // Disponibilidad de baño
+          Row(
+            children: [
+              Icon(
+                bano.tienerestroom ? Icons.check_circle : Icons.cancel,
+                color: bano.tienerestroom ? Colors.green : Colors.red,
+                size: 28,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  bano.tienerestroom ? "Tiene baños disponibles" : "No tiene baños",
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
+          ),
+          if (bano.description.isNotEmpty && bano.description != 'Sin descripción') ...[
+            const SizedBox(height: 10),
+            Text(bano.description, style: const TextStyle(fontStyle: FontStyle.italic)),
+          ],
+          
+          const Divider(height: 30),
+          
+          // Horarios
+          if (bano.horarios != null && bano.horarios!.isNotEmpty) ...[
+            InkWell(
+              onTap: () {
+                setState(() {
+                  _horariosExpandidos = !_horariosExpandidos;
+                });
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Row(
+                  children: [
+                    Icon(Icons.access_time, color: Colors.blueGrey[700]),
+                    const SizedBox(width: 10),
+                    Text(
+                      bano.abiertoAhora == true ? "Abierto ahora" : (bano.abiertoAhora == false ? "Cerrado ahora" : "Horarios"),
+                      style: TextStyle(
+                        fontSize: 16, 
+                        fontWeight: FontWeight.w500,
+                        color: bano.abiertoAhora == true ? Colors.green[700] : Colors.red[700]
+                      ),
+                    ),
+                    const Spacer(),
+                    Icon(_horariosExpandidos ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down),
+                  ],
+                ),
+              ),
+            ),
+            if (_horariosExpandidos) ...[
+              const SizedBox(height: 10),
+              Padding(
+                padding: const EdgeInsets.only(left: 34.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: bano.horarios!.map((h) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 3.0),
+                    child: Text(h, style: const TextStyle(fontSize: 14)),
+                  )).toList(),
+                ),
+              ),
+            ],
+            const Divider(height: 30),
+          ],
+          
+          // Reseñas (Placeholder)
+          const Text(
+            "Reseñas",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: List.generate(5, (index) => const Icon(Icons.star_border, color: Colors.orange, size: 30)),
+          ),
+          const SizedBox(height: 8),
+          Text("Sé el primero en opinar", style: TextStyle(color: Colors.grey[600], fontSize: 15)),
+          const SizedBox(height: 20),
+          
+          // Botón Escribir Reseña
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Funcionalidad de reseñas próximamente")),
+                );
+              },
+              icon: const Icon(Icons.rate_review),
+              label: const Text("Escribir una reseña", style: TextStyle(fontSize: 16)),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text("Cerrar"),
-        ),
-      ],
     );
   }
 }
