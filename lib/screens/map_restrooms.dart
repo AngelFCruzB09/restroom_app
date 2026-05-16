@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:restroom_app/place_model.dart';
-import 'package:restroom_app/places_service.dart';
-import 'package:restroom_app/location_service.dart';
+import 'package:restroom_app/model/place_model.dart';
+import 'package:restroom_app/services/places_service.dart';
+import 'package:restroom_app/services/location_service.dart';
 import 'package:rive/rive.dart';
 
 class MapRestrooms extends StatefulWidget {
@@ -153,12 +153,18 @@ class _RestroomBottomSheetState extends State<_RestroomBottomSheet> {
   String _traducirTipo(String? tipo) {
     if (tipo == null) return "Lugar";
     switch (tipo) {
-      case 'restaurant': return 'Restaurante';
-      case 'gas_station': return 'Gasolinera';
-      case 'cafe': return 'Cafetería';
-      case 'primary_school': return 'Escuela Primaria';
-      case 'university': return 'Universidad';
-      default: return tipo.replaceAll('_', ' ');
+      case 'restaurant':
+        return 'Restaurante';
+      case 'gas_station':
+        return 'Gasolinera';
+      case 'cafe':
+        return 'Cafetería';
+      case 'primary_school':
+        return 'Escuela Primaria';
+      case 'university':
+        return 'Universidad';
+      default:
+        return tipo.replaceAll('_', ' ');
     }
   }
 
@@ -188,7 +194,7 @@ class _RestroomBottomSheetState extends State<_RestroomBottomSheet> {
               ),
             ),
           ),
-          
+
           // Encabezado
           Text(
             bano.name,
@@ -200,7 +206,7 @@ class _RestroomBottomSheetState extends State<_RestroomBottomSheet> {
             style: TextStyle(fontSize: 16, color: Colors.grey[700]),
           ),
           const SizedBox(height: 20),
-          
+
           // Disponibilidad de baño
           Row(
             children: [
@@ -212,19 +218,28 @@ class _RestroomBottomSheetState extends State<_RestroomBottomSheet> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  bano.tienerestroom ? "Tiene baños disponibles" : "No tiene baños",
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  bano.tienerestroom
+                      ? "Tiene baños disponibles"
+                      : "No tiene baños",
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ],
           ),
-          if (bano.description.isNotEmpty && bano.description != 'Sin descripción') ...[
+          if (bano.description.isNotEmpty &&
+              bano.description != 'Sin descripción') ...[
             const SizedBox(height: 10),
-            Text(bano.description, style: const TextStyle(fontStyle: FontStyle.italic)),
+            Text(
+              bano.description,
+              style: const TextStyle(fontStyle: FontStyle.italic),
+            ),
           ],
-          
+
           const Divider(height: 30),
-          
+
           // Horarios
           if (bano.horarios != null && bano.horarios!.isNotEmpty) ...[
             InkWell(
@@ -240,15 +255,25 @@ class _RestroomBottomSheetState extends State<_RestroomBottomSheet> {
                     Icon(Icons.access_time, color: Colors.blueGrey[700]),
                     const SizedBox(width: 10),
                     Text(
-                      bano.abiertoAhora == true ? "Abierto ahora" : (bano.abiertoAhora == false ? "Cerrado ahora" : "Horarios"),
+                      bano.abiertoAhora == true
+                          ? "Abierto ahora"
+                          : (bano.abiertoAhora == false
+                                ? "Cerrado ahora"
+                                : "Horarios"),
                       style: TextStyle(
-                        fontSize: 16, 
+                        fontSize: 16,
                         fontWeight: FontWeight.w500,
-                        color: bano.abiertoAhora == true ? Colors.green[700] : Colors.red[700]
+                        color: bano.abiertoAhora == true
+                            ? Colors.green[700]
+                            : Colors.red[700],
                       ),
                     ),
                     const Spacer(),
-                    Icon(_horariosExpandidos ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down),
+                    Icon(
+                      _horariosExpandidos
+                          ? Icons.keyboard_arrow_up
+                          : Icons.keyboard_arrow_down,
+                    ),
                   ],
                 ),
               ),
@@ -259,16 +284,20 @@ class _RestroomBottomSheetState extends State<_RestroomBottomSheet> {
                 padding: const EdgeInsets.only(left: 34.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: bano.horarios!.map((h) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 3.0),
-                    child: Text(h, style: const TextStyle(fontSize: 14)),
-                  )).toList(),
+                  children: bano.horarios!
+                      .map(
+                        (h) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 3.0),
+                          child: Text(h, style: const TextStyle(fontSize: 14)),
+                        ),
+                      )
+                      .toList(),
                 ),
               ),
             ],
             const Divider(height: 30),
           ],
-          
+
           // Reseñas (Placeholder)
           const Text(
             "Reseñas",
@@ -276,26 +305,40 @@ class _RestroomBottomSheetState extends State<_RestroomBottomSheet> {
           ),
           const SizedBox(height: 10),
           Row(
-            children: List.generate(5, (index) => const Icon(Icons.star_border, color: Colors.orange, size: 30)),
+            children: List.generate(
+              5,
+              (index) =>
+                  const Icon(Icons.star_border, color: Colors.orange, size: 30),
+            ),
           ),
           const SizedBox(height: 8),
-          Text("Sé el primero en opinar", style: TextStyle(color: Colors.grey[600], fontSize: 15)),
+          Text(
+            "Sé el primero en opinar",
+            style: TextStyle(color: Colors.grey[600], fontSize: 15),
+          ),
           const SizedBox(height: 20),
-          
+
           // Botón Escribir Reseña
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Funcionalidad de reseñas próximamente")),
+                  const SnackBar(
+                    content: Text("Funcionalidad de reseñas próximamente"),
+                  ),
                 );
               },
               icon: const Icon(Icons.rate_review),
-              label: const Text("Escribir una reseña", style: TextStyle(fontSize: 16)),
+              label: const Text(
+                "Escribir una reseña",
+                style: TextStyle(fontSize: 16),
+              ),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ),

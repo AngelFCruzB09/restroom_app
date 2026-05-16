@@ -1,4 +1,4 @@
-import 'package:restroom_app/profile_model.dart';
+import 'package:restroom_app/model/profile_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthService {

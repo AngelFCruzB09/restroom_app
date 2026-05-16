@@ -1,31 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:restroom_app/auth_service.dart';
+import 'package:restroom_app/screens/map_restrooms.dart';
+import 'package:restroom_app/services/auth_service.dart';
+import 'package:restroom_app/screens/sign_up_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:restroom_app/login_screen.dart';
 
-class SignUpScreen extends StatefulWidget {
-  const SignUpScreen({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
   @override
-  State<SignUpScreen> createState() => _SignUpScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _SignUpScreenState extends State<SignUpScreen> {
+class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _usernameController = TextEditingController();
-  
+
   bool _isLoading = false;
+
   final _authService = AuthService();
 
   Future<void> _submit() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
-    final username = _usernameController.text.trim();
 
-    if (email.isEmpty || password.isEmpty || username.isEmpty) {
+    if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, completa todos los campos requeridos.')),
+        const SnackBar(
+          content: Text('Por favor, completa todos los campos requeridos.'),
+        ),
       );
       return;
     }
@@ -35,24 +37,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
     });
 
     try {
-      await _authService.signUp(
-        email: email,
-        password: password,
-        username: username,
-      );
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('¡Registro exitoso! Revisa tu correo o inicia sesión.'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        
-        // Redirigir a login después de un registro exitoso
+      await _authService.signIn(email, password);
+
+      if (mounted && Supabase.instance.client.auth.currentUser != null) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          MaterialPageRoute(builder: (context) => const MapRestrooms()),
         );
       }
     } on AuthException catch (e) {
@@ -64,7 +54,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error inesperado: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Error inesperado: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -80,7 +73,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _usernameController.dispose();
     super.dispose();
   }
 
@@ -88,19 +80,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.blue),
-          onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const LoginScreen()),
-            );
-          },
-        ),
-      ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -109,11 +88,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(Icons.person_add, size: 80, color: Colors.blue),
-                const SizedBox(height: 32),
+                const Icon(Icons.wc, size: 100, color: Colors.blue),
+                const SizedBox(height: 48),
 
                 const Text(
-                  'Crear Cuenta',
+                  'Bienvenido',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 32,
@@ -123,23 +102,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Regístrate para comenzar',
+                  'Inicia sesión para continuar',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 16, color: Colors.grey),
                 ),
                 const SizedBox(height: 48),
-
-                TextField(
-                  controller: _usernameController,
-                  decoration: InputDecoration(
-                    labelText: 'Nombre de Usuario',
-                    prefixIcon: const Icon(Icons.person),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
 
                 TextField(
                   controller: _emailController,
@@ -176,36 +143,62 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     backgroundColor: Colors.blue,
                   ),
-                  child: _isLoading 
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'Iniciar Sesión',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
-                      )
-                    : const Text(
-                        'Registrarse',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
                 ),
                 const SizedBox(height: 16),
 
                 TextButton(
-                  onPressed: _isLoading ? null : () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => const LoginScreen()),
-                    );
-                  },
+                  onPressed: _isLoading
+                      ? null
+                      : () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const SignUpScreen(),
+                            ),
+                          );
+                        },
                   child: const Text(
-                    '¿Ya tienes cuenta? Inicia sesión',
+                    '¿No tienes cuenta? Regístrate',
                     style: TextStyle(color: Colors.blueAccent),
+                  ),
+                ),
+
+                const Divider(height: 48),
+                OutlinedButton.icon(
+                  onPressed: _isLoading
+                      ? null
+                      : () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const MapRestrooms(),
+                            ),
+                          );
+                        },
+                  icon: const Icon(Icons.person_outline),
+                  label: const Text('Continuar como Invitado'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ],
