@@ -4,6 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class AuthService {
   final _supabase = Supabase.instance.client;
 
+  bool get isAuthenticated => _supabase.auth.currentUser != null;
+
   Future<void> signUp({
     required String email,
     required String password,

@@ -4,6 +4,8 @@ import 'package:latlong2/latlong.dart';
 import 'package:restroom_app/model/place_model.dart';
 import 'package:restroom_app/services/places_service.dart';
 import 'package:restroom_app/services/location_service.dart';
+import 'package:restroom_app/services/auth_service.dart';
+import 'package:restroom_app/screens/add_review_screen.dart';
 import 'package:rive/rive.dart';
 
 class MapRestrooms extends StatefulWidget {
@@ -323,11 +325,21 @@ class _RestroomBottomSheetState extends State<_RestroomBottomSheet> {
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Funcionalidad de reseñas próximamente"),
-                  ),
-                );
+                if (AuthService().isAuthenticated) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AddReviewScreen(bano: bano),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text("Debes iniciar sesión para escribir una reseña"),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
               },
               icon: const Icon(Icons.rate_review),
               label: const Text(
