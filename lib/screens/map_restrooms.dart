@@ -6,6 +6,7 @@ import 'package:restroom_app/services/places_service.dart';
 import 'package:restroom_app/services/location_service.dart';
 import 'package:restroom_app/services/auth_service.dart';
 import 'package:restroom_app/screens/add_review_screen.dart';
+import 'package:restroom_app/screens/login_screen.dart';
 import 'package:rive/rive.dart';
 
 class MapRestrooms extends StatefulWidget {
@@ -333,11 +334,36 @@ class _RestroomBottomSheetState extends State<_RestroomBottomSheet> {
                     ),
                   );
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Debes iniciar sesión para escribir una reseña"),
-                      backgroundColor: Colors.red,
-                    ),
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text("Aviso"),
+                        content: const Text(
+                          "Debes iniciar sesión para escribir una reseña.",
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: const Text("Cancelar"),
+                          ),
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const LoginScreen(),
+                                ),
+                              );
+                            },
+                            child: const Text("Iniciar sesión"),
+                          ),
+                        ],
+                      );
+                    },
                   );
                 }
               },
