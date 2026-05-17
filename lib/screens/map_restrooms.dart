@@ -5,6 +5,7 @@ import 'package:restroom_app/model/place_model.dart';
 import 'package:restroom_app/services/places_service.dart';
 import 'package:restroom_app/services/location_service.dart';
 import 'package:restroom_app/services/auth_service.dart';
+import 'package:restroom_app/services/review_service.dart';
 import 'package:restroom_app/screens/add_review_screen.dart';
 import 'package:restroom_app/screens/login_screen.dart';
 import 'package:rive/rive.dart';
@@ -152,6 +153,33 @@ class _RestroomBottomSheet extends StatefulWidget {
 
 class _RestroomBottomSheetState extends State<_RestroomBottomSheet> {
   bool _horariosExpandidos = false;
+  List<Map<String, dynamic>> _reviews = [];
+  bool _isLoadingReviews = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarResenas();
+  }
+
+  Future<void> _cargarResenas() async {
+    try {
+      final resenas = await ReviewService().obtenerResenas(widget.bano.id);
+      if (mounted) {
+        setState(() {
+          _reviews = resenas;
+          _isLoadingReviews = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error al cargar reseñas: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingReviews = false;
+        });
+      }
+    }
+  }
 
   String _traducirTipo(String? tipo) {
     if (tipo == null) return "Lugar";
@@ -301,38 +329,121 @@ class _RestroomBottomSheetState extends State<_RestroomBottomSheet> {
             const Divider(height: 30),
           ],
 
-          // Reseñas (Placeholder)
+          // Reseñas
           const Text(
             "Reseñas",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
-          Row(
-            children: List.generate(
-              5,
-              (index) =>
-                  const Icon(Icons.star_border, color: Colors.orange, size: 30),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "Sé el primero en opinar",
-            style: TextStyle(color: Colors.grey[600], fontSize: 15),
-          ),
+          _isLoadingReviews
+              ? const Center(child: Padding(
+                padding: EdgeInsets.all(20.0),
+                child: CircularProgressIndicator(),
+              ))
+              : _reviews.isEmpty
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: List.generate(
+                            5,
+                            (index) => const Icon(Icons.star_border,
+                                color: Colors.orange, size: 30),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "Sé el primero en opinar",
+                          style: TextStyle(color: Colors.grey[600], fontSize: 15),
+                        ),
+                      ],
+                    )
+                  : ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _reviews.length,
+                      itemBuilder: (context, index) {
+                        final resena = _reviews[index];
+                        final rating = resena['rating'] as int? ?? 0;
+                        final comment = resena['comment']?.toString() ?? '';
+                        final profile = resena['profiles'];
+                        final username = (profile is Map && profile['username'] != null)
+                            ? profile['username']
+                            : 'Usuario anónimo';
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          color: Colors.grey[50],
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(color: Colors.grey[200]!),
+                          ),
+                          elevation: 0,
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 14,
+                                      backgroundColor: Colors.blue[100],
+                                      child: Icon(Icons.person,
+                                          size: 18, color: Colors.blue[800]),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        username,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 15),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    Row(
+                                      children: List.generate(
+                                        5,
+                                        (starIndex) => Icon(
+                                          starIndex < rating
+                                              ? Icons.star
+                                              : Icons.star_border,
+                                          color: Colors.orange,
+                                          size: 16,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (comment.isNotEmpty) ...[
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    comment,
+                                    style: TextStyle(
+                                        fontSize: 14, color: Colors.grey[800]),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
           const SizedBox(height: 20),
 
           // Botón Escribir Reseña
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: () {
+              onPressed: () async {
                 if (AuthService().isAuthenticated) {
-                  Navigator.push(
+                  await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => AddReviewScreen(bano: bano),
                     ),
                   );
+                  _cargarResenas();
                 } else {
                   showDialog(
                     context: context,
