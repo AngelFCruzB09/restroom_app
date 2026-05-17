@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:restroom_app/model/place_model.dart';
+import 'package:restroom_app/services/review_service.dart';
 
 class AddReviewScreen extends StatefulWidget {
   final RestroomLocal bano;
@@ -13,6 +14,8 @@ class AddReviewScreen extends StatefulWidget {
 class _AddReviewScreenState extends State<AddReviewScreen> {
   int _rating = 0;
   final TextEditingController _reviewController = TextEditingController();
+  bool _isLoading = false;
+  final _reviewService = ReviewService();
 
   @override
   void dispose() {
@@ -20,7 +23,7 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
     super.dispose();
   }
 
-  void _submitReview() {
+  Future<void> _submitReview() async {
     if (_rating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -39,14 +42,42 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
       );
       return;
     }
+    setState(() {
+      _isLoading = true;
+    });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Reseña guardada con éxito'),
-        backgroundColor: Colors.green,
-      ),
-    );
-    Navigator.pop(context);
+    try {
+      await _reviewService.enviarResena(
+        placeId: widget.bano.id,
+        rating: _rating,
+        comment: _reviewController.text.trim(),
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Reseña guardada con éxito'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al enviar reseña: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -131,7 +162,7 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
               width: double.infinity,
               height: 54,
               child: ElevatedButton(
-                onPressed: _submitReview,
+                onPressed: _isLoading ? null : _submitReview,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   shape: RoundedRectangleBorder(
@@ -139,14 +170,16 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
                   ),
                   elevation: 2,
                 ),
-                child: const Text(
-                  'Enviar Reseña',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                        'Enviar Reseña',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
               ),
             ),
           ],
