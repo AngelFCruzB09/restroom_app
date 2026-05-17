@@ -28,6 +28,10 @@ class _MapRestroomsState extends State<MapRestrooms> {
   List<RestroomLocal> _listaBanos = [];
   bool _isLoading = true;
 
+  final MapController _mapController = MapController();
+  bool _showSearchAreaButton = false;
+  bool _isSearchingArea = false;
+
   @override
   void initState() {
     super.initState();
@@ -83,19 +87,95 @@ class _MapRestroomsState extends State<MapRestrooms> {
   }
 
   Widget _buildMap() {
-    return FlutterMap(
-      options: MapOptions(
-        initialCenter: _currentPosition,
-        initialZoom: _initialZoom,
-      ),
+    return Stack(
       children: [
-        TileLayer(
-          urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'com.example.restroom_app',
+        FlutterMap(
+          mapController: _mapController,
+          options: MapOptions(
+            initialCenter: _currentPosition,
+            initialZoom: _initialZoom,
+            onPositionChanged: (camera, hasGesture) {
+              if (hasGesture && !_showSearchAreaButton) {
+                setState(() {
+                  _showSearchAreaButton = true;
+                });
+              }
+            },
+          ),
+          children: [
+            TileLayer(
+              urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'com.example.restroom_app',
+            ),
+            MarkerLayer(markers: _buildMarkers()),
+          ],
         ),
-        MarkerLayer(markers: _buildMarkers()),
+        if (_showSearchAreaButton)
+          Positioned(
+            top: 20,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: ElevatedButton.icon(
+                onPressed: _isSearchingArea ? null : _buscarEnEstaZona,
+                icon: _isSearchingArea
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.search),
+                label: Text(
+                    _isSearchingArea ? 'Buscando...' : 'Buscar en esta zona'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.blue,
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 20, vertical: 12),
+                ),
+              ),
+            ),
+          ),
       ],
     );
+  }
+
+  Future<void> _buscarEnEstaZona() async {
+    setState(() {
+      _isSearchingArea = true;
+    });
+
+    try {
+      final center = _mapController.camera.center;
+      final lista = await RestroomService().findRestrooms(
+        center.latitude,
+        center.longitude,
+      );
+
+      if (mounted) {
+        setState(() {
+          _listaBanos = lista;
+          _showSearchAreaButton = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error al buscar en esta zona: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error al buscar en esta zona')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSearchingArea = false;
+        });
+      }
+    }
   }
 
   List<Marker> _buildMarkers() {
